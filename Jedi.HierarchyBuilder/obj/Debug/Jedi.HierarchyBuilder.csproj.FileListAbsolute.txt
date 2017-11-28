@@ -1,0 +1,14 @@
+c:\users\andrei.ababei\documents\visual studio 2015\Projects\Jedi.HierarchyBuilder\Jedi.HierarchyBuilder\bin\Debug\Jedi.HierarchyBuilder.exe.config
+c:\users\andrei.ababei\documents\visual studio 2015\Projects\Jedi.HierarchyBuilder\Jedi.HierarchyBuilder\bin\Debug\Jedi.HierarchyBuilder.exe
+c:\users\andrei.ababei\documents\visual studio 2015\Projects\Jedi.HierarchyBuilder\Jedi.HierarchyBuilder\bin\Debug\Jedi.HierarchyBuilder.pdb
+c:\users\andrei.ababei\documents\visual studio 2015\Projects\Jedi.HierarchyBuilder\Jedi.HierarchyBuilder\obj\Debug\Jedi.HierarchyBuilder.csprojResolveAssemblyReference.cache
+c:\users\andrei.ababei\documents\visual studio 2015\Projects\Jedi.HierarchyBuilder\Jedi.HierarchyBuilder\obj\Debug\Jedi.HierarchyBuilder.Main.resources
+c:\users\andrei.ababei\documents\visual studio 2015\Projects\Jedi.HierarchyBuilder\Jedi.HierarchyBuilder\obj\Debug\Jedi.HierarchyBuilder.Properties.Resources.resources
+c:\users\andrei.ababei\documents\visual studio 2015\Projects\Jedi.HierarchyBuilder\Jedi.HierarchyBuilder\obj\Debug\Jedi.HierarchyBuilder.csproj.GenerateResource.Cache
+c:\users\andrei.ababei\documents\visual studio 2015\Projects\Jedi.HierarchyBuilder\Jedi.HierarchyBuilder\obj\Debug\Jedi.HierarchyBuilder.exe
+c:\users\andrei.ababei\documents\visual studio 2015\Projects\Jedi.HierarchyBuilder\Jedi.HierarchyBuilder\obj\Debug\Jedi.HierarchyBuilder.pdb
+C:\Users\andrei.ababei\Documents\Visual Studio 2015\Projects\Jedi.HierarchyBuilder\Jedi.HierarchyBuilder\bin\Debug\Newtonsoft.Json.dll
+C:\Users\andrei.ababei\Documents\Visual Studio 2015\Projects\Jedi.HierarchyBuilder\Jedi.HierarchyBuilder\bin\Debug\Newtonsoft.Json.xml
+C:\Users\andrei.ababei\Documents\Visual Studio 2015\Projects\Jedi.HierarchyBuilder\Jedi.HierarchyBuilder\obj\Debug\Jedi.HierarchyBuilder.Forms.AboutForm.resources
+C:\Users\andrei.ababei\Documents\Visual Studio 2015\Projects\Jedi.HierarchyBuilder\Jedi.HierarchyBuilder\obj\Debug\Jedi.HierarchyBuilder.Forms.JsonViewerForm.resources
+C:\Users\andrei.ababei\Documents\Visual Studio 2015\Projects\Jedi.HierarchyBuilder\Jedi.HierarchyBuilder\obj\Debug\Jedi.HierarchyBuilder.Forms.OrganisationCreationForm.resources
