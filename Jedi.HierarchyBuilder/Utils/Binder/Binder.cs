@@ -10,13 +10,14 @@ using Jedi.HierarchyBuilder.Utils.Binder.Validators;
 
 namespace Jedi.HierarchyBuilder.Utils.Binder
 {
-    public abstract class Binder<TSource, TResult> : IBinder<TResult>, IBinderSettable<TResult>
+    public abstract class Binder<TSource, TResult> : IBinder<TResult>, IBinderSettable<TResult>, IBinderInformable
     {
         #region Fields
 
         private readonly Func<TSource> _entity;
         private readonly Expression<Func<TSource, TResult>> _result;
         private ICollection<IBinderValidator<TResult>> _validators;
+        private bool _showToolTip;
 
         protected readonly Guid Id;
 
@@ -40,9 +41,10 @@ namespace Jedi.HierarchyBuilder.Utils.Binder
 
         #region Constructors
 
-        protected Binder()
+        private Binder()
         {
             _validators = new List<IBinderValidator<TResult>>();
+            _showToolTip = false;
             Id = Guid.NewGuid();
         }
 
@@ -99,6 +101,22 @@ namespace Jedi.HierarchyBuilder.Utils.Binder
 
         #endregion
 
+        #region Implementation of IBinderInformable
+
+        public virtual bool ShowToolTip
+        {
+            get
+            {
+                return _showToolTip;
+            }
+            set
+            {
+                _showToolTip = value;
+            }
+        }
+
+        #endregion
+
         #region Overrides of Object
 
         /// <inheritdoc />
@@ -127,15 +145,15 @@ namespace Jedi.HierarchyBuilder.Utils.Binder
                 return;
 
             var entity = _entity();
-            var property = ReflexionEx.GetPropertyInfo(_result);
 
             //                      if validators will permit
             if (entity != null && (Validators?.All(v => v.IsValid(value)) ?? true))
             {
-                property.SetValue(entity, value);
+                ReflexionEx.SetPropertyValue(entity, value, _result);
 
                 if (OnChanged != null)
                 {
+                    var property = ReflexionEx.GetPropertyInfo(_result);
                     var args = new BinderValueChangedArgs<TResult>(value, property.Name);
                     OnChanged?.Invoke(this, args);
                 }
@@ -149,14 +167,12 @@ namespace Jedi.HierarchyBuilder.Utils.Binder
         [Pure]
         protected virtual TResult GetResultOfEntity()
         {
-            var property = ReflexionEx.GetPropertyInfo(_result);
-
             var entity = _entity();
 
             if (entity == null)
                 return default(TResult);
 
-            return (TResult) property.GetValue(entity);
+            return (TResult)ReflexionEx.GetPropertyValue(entity, _result);
         }
 
         #endregion

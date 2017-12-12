@@ -1,27 +1,31 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
-using Jedi.HierarchyBuilder.Entities;
+using System.Collections.Generic;
+
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
+using Jedi.HierarchyBuilder.Entities;
+
 namespace Jedi.HierarchyBuilder.Utils.Services
 {
-    public class OrganisationService
+    public class OrganisationService : Service
     {
-        private readonly string _apiUrl;
+        #region Constructors
 
         public OrganisationService(string apiUrl)
+            : base(apiUrl)
         {
-            _apiUrl = apiUrl;
         }
+
+        #endregion
+
+        #region Public methods
 
         public async Task<IEnumerable<OrganisationModel>> Get(string authorization)
         {
-            var endpoint = $"{_apiUrl.TrimEnd('/')}/api/organisations";
+            var endpoint = $"{ApiUrl.TrimEnd('/')}/api/organisations";
 
             using (var client = new HttpClient())
             {
@@ -41,5 +45,7 @@ namespace Jedi.HierarchyBuilder.Utils.Services
                 return jsonObj["items"].ToObject<IEnumerable<OrganisationModel>>();
             }
         }
+
+        #endregion
     }
 }

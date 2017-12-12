@@ -6,5 +6,8 @@
       <Value Profile="(Default)">https://jedi-api-main-dev.splintt.nl
 </Value>
     </Setting>
+    <Setting Name="RecentProjects" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
   </Settings>
 </SettingsFile>

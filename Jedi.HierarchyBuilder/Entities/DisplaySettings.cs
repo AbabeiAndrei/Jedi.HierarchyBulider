@@ -6,9 +6,15 @@ using System.Threading.Tasks;
 
 namespace Jedi.HierarchyBuilder.Entities
 {
-    public class DisplaySettings
+    public class DisplayModel
     {
-        public virtual MasterDisplayModel MasterDisplay { get; set; }
-        public virtual ChildDisplayModel ChildDisplay { get; set; }
+        public MasterDisplayModel MasterDisplay { get; set; }
+        public ChildDisplayModel ChildDisplay { get; set; }
+
+        public DisplayModel()
+        {
+            MasterDisplay = new MasterDisplayModel();
+            ChildDisplay = new ChildDisplayModel();
+        }
     }
 }

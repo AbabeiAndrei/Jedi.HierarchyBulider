@@ -6,7 +6,7 @@ using System.Windows.Forms;
 using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-
+using System.Text;
 using Jedi.HierarchyBuilder.Entities;
 using Jedi.HierarchyBuilder.Forms;
 using Jedi.HierarchyBuilder.Logging;
@@ -55,6 +55,7 @@ namespace Jedi.HierarchyBuilder
         private static int _idCounter;
         private readonly IconDrawer _drawer;
         private readonly RootOrganisationModel _rootOrganisationModel;
+        private IList<RecentProject> _projects;
 
         private static readonly JsonSerializerSettings _jsonSettings;
 
@@ -113,6 +114,8 @@ namespace Jedi.HierarchyBuilder
             await LoadUi();
             CreateBindings();
             tvHierarchy.SelectedNode = tvHierarchy.Nodes[0];
+
+            LoadRecentProjects();
         }
 
         private async void btnApiUrl_Click(object sender, EventArgs e)
@@ -163,27 +166,119 @@ namespace Jedi.HierarchyBuilder
 
         private void tsmiDelete_Click(object sender, EventArgs e)
         {
-            DeleteSelectedLearningActivity();
+            DeleteSelectedLearningActivity(sender is ToolStripButton);
+        }
+        
+        private void tsmiMoveUp_Click(object sender, EventArgs e)
+        {
+            var node = tvHierarchy.SelectedNode;
+
+            if(node == null || node.Level <= 0 || node.Index <= 0)
+                return;
+
+            node.MoveUp();
+            tvHierarchy.SelectedNode = node;
+        }
+
+        private void tsmiMoveDown_Click(object sender, EventArgs e)
+        {
+            var node = tvHierarchy.SelectedNode;
+
+            if (node == null || node.Level <= 0 || node.Parent == null || node.Index >= node.Parent.Nodes.Count - 1)
+                return;
+
+            node.MoveDown();
+            tvHierarchy.SelectedNode = node;
+        }
+
+        private void tsmiMoveIn_Click(object sender, EventArgs e)
+        {
+            var node = tvHierarchy.SelectedNode;
+
+            if(node == null || node.Level <= 0 || (GetNodeLearningActivity(node.PrevNode)?.IsActivity ?? true) || node.Parent == null)
+                return;
+
+            var item = GetNodeLearningActivity(node);
+            var newParent = GetNodeLearningActivity(node.PrevNode);
+            item.ParentRelation.ParentRelationId = newParent.Id;
+
+            var newParentNode = node.PrevNode;
+
+            node.Parent.Nodes.Remove(node);
+            newParentNode.Nodes.Add(node);
+            newParentNode.Expand();
+            tvHierarchy.SelectedNode = node;
+        }
+
+        private void tsmiMoveOut_Click(object sender, EventArgs e)
+        {
+            var node = tvHierarchy.SelectedNode;
+
+            if (node == null || node.Level <= 0 || node.Parent?.Parent == null)
+                return;
+            
+            var item = GetNodeLearningActivity(node);
+            var newParent = GetNodeLearningActivity(node.Parent.Parent);
+            item.ParentRelation.ParentRelationId = newParent?.Id ?? 0;
+
+            var newParentNode = node.Parent.Parent;
+            var oldParentNode = node.Parent;
+            node.Parent.Nodes.Remove(node);
+            newParentNode.Nodes.Insert(oldParentNode.Index + 1, node);
+            newParentNode.Expand();
+            tvHierarchy.SelectedNode = node;
         }
 
         private void cmsHierarcy_Opening(object sender, CancelEventArgs e)
         {
             var selectedIsUpperLevel = (tvHierarchy.SelectedNode?.Level ?? -1) > 0;
+            var isActivity = !GetSelectedLearningActivity()?.IsActivity ?? false;
             tsmiDelete.Enabled = selectedIsUpperLevel;
             tsmiAddContent.Enabled =
-                tsmiAddContainer.Enabled = !selectedIsUpperLevel || (!GetSelectedLearningActivity()?.IsActivity ?? false);
+                tsmiAddContainer.Enabled =!selectedIsUpperLevel || isActivity;
+
+            var node = tvHierarchy.SelectedNode;
+
+            if (node != null)
+            {
+                tsmiMove.Enabled = node.Level > 0;
+                tsmiMoveUp.Enabled = node.Index > 0;
+                tsmiMoveDown.Enabled = node.Parent != null && node.Index < node.Parent.Nodes.Count - 1;
+                tsmiMoveIn.Enabled = node.Index > 0 && (!GetNodeLearningActivity(node.PrevNode)?.IsActivity ?? false);
+                tsmiMoveOut.Enabled = node.Level > 1 && node.Parent?.Parent != null;
+            }
         }
 
         private void tvHierarchy_AfterSelect(object sender, TreeViewEventArgs e)
         {
-            tpGeneral.Text = tvHierarchy.SelectedNode?.Text ?? "General";
+            var node = tvHierarchy.SelectedNode;
+
+            tpGeneral.Text = node?.Text ?? "General";
             tpGeneral.Enabled = 
                 tpProvider.Enabled = 
-                tpPolicy.Enabled = (tvHierarchy.SelectedNode?.Level ?? -1) > 0;
+                tpDisplaySettings.Enabled = 
+                tpPolicy.Enabled = (node?.Level ?? -1) > 0;
 
             SetFieldsEnabled();
 
+            lblPath.Text = GetPath();
+
             _binder.Set();
+
+            if (node != null)
+            {
+                tsmiMove.Enabled = node.Level > 0;
+
+                tsbMoveUp.Enabled = node.Index > 0;
+
+                tsbMoveDown.Enabled = node.Parent != null && node.Index < node.Parent.Nodes.Count - 1;
+
+                tsbMoveIn.Enabled = node.Index > 0 && (!GetNodeLearningActivity(node.PrevNode)?.IsActivity ?? false);
+
+                tsbMoveOut.Enabled = node.Level > 1 && node.Parent?.Parent != null;
+
+                tsbDelete.Enabled = node.Level > 0;
+            }
         }
 
         private void tmrShowLastAction_Tick(object sender, EventArgs e)
@@ -296,7 +391,7 @@ namespace Jedi.HierarchyBuilder
 
         private void tsmiHierarcyDelete_Click(object sender, EventArgs e)
         {
-            DeleteSelectedLearningActivity();
+            DeleteSelectedLearningActivity(false);
         }
 
         private async void tsmiHierarcySend_Click(object sender, EventArgs e)
@@ -398,6 +493,51 @@ namespace Jedi.HierarchyBuilder
             }
         }
 
+        private void LoadRecentProjects()
+        {
+            if(_projects == null)
+            {
+                try
+                {
+                    _projects = !string.IsNullOrEmpty(Settings.Default.RecentProjects) 
+                                    ? JsonConvert.DeserializeObject<IList<RecentProject>>(Settings.Default.RecentProjects) 
+                                    : new List<RecentProject>();
+                }
+                catch
+#if DEBUG
+                (Exception e)
+#endif
+                {
+                    _logger.Write("Projects cannot be loaded");
+#if DEBUG
+                    _logger.Write(e.Message);
+#endif
+                    _projects = new List<RecentProject>();
+                }
+            }
+
+
+            if (_projects.Count <= 0)
+            {
+                tsmiRecent.Visible = false;
+                tsmiSepRecent.Visible = false;
+                return;
+            }
+
+            tsmiRecent.DropDownItems.Clear();
+            tsmiRecent.DropDownItems.AddRange(_projects.OrderByDescending(rp => rp.Accesed).ThenBy(rp => rp.Name)
+                                                       .Select(CreateDropDownItem)
+                                                       .ToArray());
+
+            tsmiRecent.Visible = true;
+            tsmiSepRecent.Visible = true;
+        }
+
+        private static ToolStripItem CreateDropDownItem(RecentProject arg)
+        {
+            return new ToolStripMenuItem($"({arg.Path})");
+        }
+
         private void CreateImages()
         {
             foreach (var tuple in Enumerable.Range(1, 100).Select(i => new Tuple<int, Image>(i, _drawer.DrawNumber(i))))
@@ -412,7 +552,12 @@ namespace Jedi.HierarchyBuilder
             FillCbWithEnum<AccessEnforcePolicyEnum>(cbEnforcePolicy);
             FillCbWithEnum<TransitionStates>(cbTransitionState);
             FillCbWithEnum<DisplayEnforcePolicyEnum>(cbDisplayPolicy);
+            FillCbWithEnum<LearningActivityActivationState>(cbState);
             FillCbWithEnum<ProviderType>(cbProvider);
+            FillCbWithEnum<ViewDisplayType>(cbMasterViewDisplay);
+            FillCbWithEnum<ViewDisplayType>(cbChildViewDisplay);
+            FillCbWithEnum<FrontendTheme>(cbMasterTheme);
+            FillCbWithEnum<FrontendTheme>(cbChildTheme);
 
             cbProvider.SelectedIndex = 3;//todo change from binder
 
@@ -450,6 +595,7 @@ namespace Jedi.HierarchyBuilder
             binder.Add(txtCategories, la => la.CategoriesProxy).IsThroughProxy();
             binder.Add(txtTinCanId, la => la.TinCan_Id).Validate(new UriValidator());
             binder.Add(txtLaunchUrl, la => la.TinCan_StartupFile);
+            binder.Add(cbState, la => la.ActivationState);
 
             binder.Add(nudDisplayOrder, la => la.DisplayOrderProxy)
                   .Validate(new RangeLimiterValidator(0, 100))
@@ -467,6 +613,22 @@ namespace Jedi.HierarchyBuilder
             binder.Add(cbProvider, la => la.PackageProviderType);
             binder.Add(cbOrganisations, () => _rootOrganisationModel, model => model.OrganisationId)
                   .AfterChange(ChangedSelectedOrganisation);
+
+            binder.Add(cbMasterViewDisplay, la => la.DisplaySettings.MasterDisplay.ViewDisplay);
+            binder.Add(chkMasterShowNewFlag, la => la.DisplaySettings.MasterDisplay.ShowNewFlag);
+            binder.Add(chkMasterShowProgress, la => la.DisplaySettings.MasterDisplay.ShowProgress);
+            binder.Add(chkMasterShowDescription, la => la.DisplaySettings.MasterDisplay.ShowDescription);
+            binder.Add(cbMasterTheme, la => la.DisplaySettings.MasterDisplay.Theme);
+            binder.Add(chkMasterShowFilter, la => la.DisplaySettings.MasterDisplay.ShowFilter);
+            binder.Add(chkMasterShowNavigationWidget, la => la.DisplaySettings.MasterDisplay.ShowNavigationWidget);
+            binder.Add(chkMasterShowSuportWidget, la => la.DisplaySettings.MasterDisplay.ShowSupportWidget);
+
+            binder.Add(cbChildViewDisplay, la => la.DisplaySettings.ChildDisplay.ViewDisplay);
+            binder.Add(chkChildShowNewFlag, la => la.DisplaySettings.ChildDisplay.ShowNewFlag);
+            binder.Add(chkChildShowProgress, la => la.DisplaySettings.ChildDisplay.ShowProgress);
+            binder.Add(chkChildShowDescription, la => la.DisplaySettings.ChildDisplay.ShowDescription);
+            binder.Add(chkChildShowGenericInfo, la => la.DisplaySettings.ChildDisplay.ShowGenericInfo);
+            binder.Add(cbChildTheme, la => la.DisplaySettings.ChildDisplay.Theme);
 
             binder.BindValueChange += (sender, args) => HaveChanges = true;
 
@@ -503,6 +665,8 @@ namespace Jedi.HierarchyBuilder
                 tvHierarchy.SelectedNode.Text = name;
 
             tpGeneral.Text = name;
+
+            lblPath.Text = GetPath();
         }
 
         private void SetIsVisibleIconToNode(bool visible)
@@ -547,10 +711,31 @@ namespace Jedi.HierarchyBuilder
                 node.SelectedImageIndex = icon;
         }
 
-        private LearningActivity GetSelectedLearningActivity()
+        private string GetPath()
         {
-            return tvHierarchy.SelectedNode?.Tag as LearningActivity;
+            StringBuilder sb = new StringBuilder();
+
+            var node = tvHierarchy.SelectedNode;
+
+            while (node.Parent != null)
+            {
+                var la = GetNodeLearningActivity(node);
+                if(la == null)
+                    break;
+
+                sb.Insert(0, "/" + la.Name);
+                node = node.Parent;
+            }
+
+            if(sb.Length == 0)
+                sb.Append("/");
+
+            return sb.ToString();
         }
+
+        private LearningActivity GetSelectedLearningActivity() => GetNodeLearningActivity(tvHierarchy.SelectedNode);
+
+        private static LearningActivity GetNodeLearningActivity(TreeNode node) => node?.Tag as LearningActivity;
 
         private void CreateLa(bool isActivity)
         {
@@ -623,7 +808,8 @@ namespace Jedi.HierarchyBuilder
 
             cbContainerPolicy.Enabled =
                 nudReqItems.Enabled =
-                cbEnforcePolicy.Enabled = !la.IsActivity;
+                cbEnforcePolicy.Enabled = 
+                gbMasterDisplay.Enabled = !la.IsActivity;
         }
 
         private bool CheckFields()
@@ -766,9 +952,6 @@ namespace Jedi.HierarchyBuilder
 
         private bool SaveHierarchy()
         {
-            if (!HaveChanges)
-                return true;
-
             if (string.IsNullOrEmpty(_fileHandled))
             {
                 var response = sfdSave.ShowDialog(this);
@@ -784,16 +967,45 @@ namespace Jedi.HierarchyBuilder
 
             _logger.Write("File saved");
 
+            var index = _projects.FindIndex(rp => rp.Path == _fileHandled);
+            if (index >= 0)
+            {
+                _projects.Move(index, 0);
+                _projects[index].Accesed = DateTime.Now;
+            }
+            else
+            {
+                _projects.Insert(0, new RecentProject(_fileHandled));
+            }
+
+            _projects = new List<RecentProject>(_projects.Take(10));
+
+            Settings.Default.RecentProjects = JsonConvert.SerializeObject(_projects);
+            LoadRecentProjects();
+
             return true;
         }
 
-        private void DeleteSelectedLearningActivity()
+        private void DeleteSelectedLearningActivity(bool showQuestion)
         {
             var la = GetSelectedLearningActivity();
             if (la == null)
                 return;
+            
+            if (showQuestion)
+            {
+                var resoponse = MessageBox.Show(this,
+                                                $"Are you sure you want to remove {la.Name}?",
+                                                BASE_TITLE,
+                                                MessageBoxButtons.YesNo,
+                                                MessageBoxIcon.Question);
+
+                if (resoponse != DialogResult.Yes)
+                    return;
+            }
 
             var type = la.IsActivity ? "Content" : "Container";
+
             _logger.Write($"Deleted {type} {tvHierarchy.SelectedNode?.Text}");
             tvHierarchy.SelectedNode?.Remove();
 
@@ -822,14 +1034,24 @@ namespace Jedi.HierarchyBuilder
                 if(organisationId <= 0)
                     throw new Exception("Incorect selection for organisation");
 
-                var service = new HierarchySenderService(txtUrl.Text);
-                await service.SendHierarchy(json, organisationId, txtAuthorization.Text);
+                var hierarchyService = new HierarchySenderService(txtUrl.Text);
+                await hierarchyService.SendHierarchy(json, organisationId, txtAuthorization.Text);
                 _logger.Write("Hierarcy sended");
+            }
+            catch (ServiceException ex)
+            {
+                _logger.Write(ex.Message);
+                MessageBox.Show(this, ex.Message, BASE_TITLE, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             catch (Exception ex)
             {
                 _logger.Write("Fail to send hierarchy");
+#if DEBUG
+                _logger.Write("Fail to send hierarchy");
                 MessageBox.Show(this, ex.Message, BASE_TITLE, MessageBoxButtons.OK, MessageBoxIcon.Error);
+#else
+                MessageBox.Show(this, "Fail to send hierarchy", BASE_TITLE, MessageBoxButtons.OK, MessageBoxIcon.Error);
+#endif
             }
             finally
             {

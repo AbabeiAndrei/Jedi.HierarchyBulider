@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace Jedi.HierarchyBuilder.Entities
 {
@@ -155,8 +156,11 @@ namespace Jedi.HierarchyBuilder.Entities
 
         public int? CultureId { get; set; }
 
-        public DisplaySettings DisplaySettings { get; set; }
+        #region Proxies
+        
+        public DisplayModel DisplaySettings { get; set; }
 
+        [JsonIgnore]
         public int DisplayOrderProxy
         {
             get
@@ -169,6 +173,8 @@ namespace Jedi.HierarchyBuilder.Entities
                     ParentRelation.DisplayOrder = value;
             }
         }
+
+        [JsonIgnore]
         public bool IsMandatoryProxy
         {
             get
@@ -182,6 +188,7 @@ namespace Jedi.HierarchyBuilder.Entities
             }
         }
 
+        [JsonIgnore]
         public ContainerPolicyType ContainerPolicyProxy
         {
             get
@@ -195,6 +202,7 @@ namespace Jedi.HierarchyBuilder.Entities
             }
         }
 
+        [JsonIgnore]
         public int RequiredItemsCountProxy
         {
             get
@@ -208,6 +216,7 @@ namespace Jedi.HierarchyBuilder.Entities
             }
         }
 
+        [JsonIgnore]
         public AccessEnforcePolicyEnum AccessEnforcePolicyProxy
         {
             get
@@ -221,6 +230,7 @@ namespace Jedi.HierarchyBuilder.Entities
             }
         }
 
+        [JsonIgnore]
         public TransitionStates TransitionStateProxy
         {
             get
@@ -234,6 +244,7 @@ namespace Jedi.HierarchyBuilder.Entities
             }
         }
 
+        [JsonIgnore]
         public DisplayEnforcePolicyEnum DisplayEnforcePolicyProxy
         {
             get
@@ -247,6 +258,7 @@ namespace Jedi.HierarchyBuilder.Entities
             }
         }
 
+        [JsonIgnore]
         public int AccessOrderProxy
         {
             get
@@ -260,6 +272,8 @@ namespace Jedi.HierarchyBuilder.Entities
             }
         }
 
+        #endregion
+
         public LearningActivity(bool isActivity, string name)
         {
             IsActivity = isActivity;
@@ -270,7 +284,7 @@ namespace Jedi.HierarchyBuilder.Entities
             ActivityArchive_Id = Guid.Empty;
             CreationDate = DateTime.Now;
             LastUpdate = DateTime.Now;
-            DisplaySettings = new DisplaySettings();
+            DisplaySettings = new DisplayModel();
             ActiveVersion = new LearningActivityVersionModel();
             Categories = Enumerable.Empty<CategoryModel>();
 

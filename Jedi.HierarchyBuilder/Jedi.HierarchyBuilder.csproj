@@ -67,10 +67,12 @@
     <Compile Include="Entities\DisplaySettings.cs" />
     <Compile Include="Entities\IValidatable.cs" />
     <Compile Include="Entities\LearningActivity.cs" />
+    <Compile Include="Entities\LearningActivityDisplaySettingsModel.cs" />
     <Compile Include="Entities\LearningActivityProviderModel.cs" />
     <Compile Include="Entities\LearningActivityRelation.cs" />
     <Compile Include="Entities\LearningActivityVersionModel.cs" />
     <Compile Include="Entities\OrganisationModel.cs" />
+    <Compile Include="Entities\RecentProject.cs" />
     <Compile Include="Entities\RootActivity.cs" />
     <Compile Include="Entities\TinCanInformation.cs" />
     <Compile Include="Forms\JsonViewerForm.cs">
@@ -105,6 +107,7 @@
     <Compile Include="Utils\Binder\Binder.cs" />
     <Compile Include="Utils\Binder\BinderHelpers.cs" />
     <Compile Include="Utils\Binder\IBinderActions.cs" />
+    <Compile Include="Utils\Binder\IBinderInformable.cs" />
     <Compile Include="Utils\Binder\IBinderSettable.cs" />
     <Compile Include="Utils\Binder\IBinderTracker.cs" />
     <Compile Include="Utils\Binder\Validators\IBinderValidator.cs" />
@@ -118,12 +121,15 @@
     <Compile Include="Utils\Binder\Validators\RangeLimiterValidator.cs" />
     <Compile Include="Utils\Binder\Validators\StringNotEmptyValidator.cs" />
     <Compile Include="Utils\Binder\Validators\UriValidator.cs" />
+    <Compile Include="Utils\DebugUtils.cs" />
     <Compile Include="Utils\Drawer\IconDrawer.cs" />
     <Compile Include="Utils\GeneraEx.cs" />
     <Compile Include="Utils\LinqEx.cs" />
     <Compile Include="Utils\ReflexionEx.cs" />
     <Compile Include="Utils\Services\HierarchySenderService.cs" />
     <Compile Include="Utils\Services\OrganisationService.cs" />
+    <Compile Include="Utils\Services\Service.cs" />
+    <Compile Include="Utils\Services\ServiceException.cs" />
     <Compile Include="Utils\StringEx.cs" />
     <Compile Include="Utils\UiExtensions.cs" />
     <Compile Include="Utils\WinApi.cs" />
@@ -165,6 +171,21 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\ghost.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\down-arrow.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\left-arrow.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\right-arrow.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\up-arrow.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\delete.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

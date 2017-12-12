@@ -6,21 +6,12 @@ using System.Threading.Tasks;
 
 namespace Jedi.HierarchyBuilder.Utils.Services
 {
-    public class HierarchySenderService
+    public class HierarchySenderService : Service
     {
-        #region Fields
-
-        private readonly string _apiUrl;
-
-        #endregion
-
         #region Constructors
 
-        public HierarchySenderService(string apiUrl)
+        public HierarchySenderService(string apiUrl) : base(apiUrl)
         {
-            if(string.IsNullOrEmpty(apiUrl))
-                throw new ArgumentNullException(nameof(apiUrl));
-            _apiUrl = apiUrl;
         }
 
         #endregion
@@ -29,7 +20,7 @@ namespace Jedi.HierarchyBuilder.Utils.Services
 
         public async Task SendHierarchy(string json, int organisationId, string authorization)
         {
-            var endpoint = $"{_apiUrl.TrimEnd('/')}/api/platform/organisation/{organisationId}/hierarchy";
+            var endpoint = $"{ApiUrl.TrimEnd('/')}/api/platform/organisation/{organisationId}/hierarchy";
 
             using (var client = new HttpClient())
             {

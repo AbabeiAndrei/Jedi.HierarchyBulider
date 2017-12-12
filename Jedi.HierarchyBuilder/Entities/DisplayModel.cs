@@ -12,23 +12,18 @@ namespace Jedi.HierarchyBuilder.Entities
         None = 0,
         ListView,
         SimpleGridDisplay,
-        ExtendedGridDisplay,
-        Default = ListView,
+        ExtendedGridDisplay
     }
 
     public enum FrontendTheme
     {
-        None = 0,
-        DarkBlueTheme = 1,
-        // Currently not supported
-        OrangeTheme,
-        //Others to be added in the future
+        DarkBlueTheme = 1
     }
 
     public abstract class AbstractDisplayModel
     {
-        [DefaultValue(ViewDisplayType.Default)]
-        public virtual ViewDisplayType? ViewDisplay { get; set; } = null;
+        [DefaultValue(ViewDisplayType.ListView)]
+        public virtual ViewDisplayType ViewDisplay { get; set; } = ViewDisplayType.ListView;
 
         [DefaultValue(true)]
         public virtual bool ShowNewFlag { get; set; } = true;
@@ -40,10 +35,10 @@ namespace Jedi.HierarchyBuilder.Entities
         public virtual bool ShowDescription { get; set; } = true;
 
         [DefaultValue(true)]
-        public virtual bool ShowDuration { get; set; } = true;
+        public virtual bool ShowGenericInfo { get; set; } = true;
 
         [DefaultValue(FrontendTheme.DarkBlueTheme)]
-        public virtual FrontendTheme? Theme { get; set; }
+        public virtual FrontendTheme? Theme { get; set; } = FrontendTheme.DarkBlueTheme;
     }
 
     public class ChildDisplayModel : AbstractDisplayModel { }
